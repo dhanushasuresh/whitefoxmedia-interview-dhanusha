@@ -1,0 +1,174 @@
+import { useEffect, useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
+import api from '../services/api'
+
+export default function EditStudent() {
+  const { id } = useParams()
+  const navigate = useNavigate()
+  const [formData, setFormData] = useState({
+    first_name: '',
+    last_name: '',
+    email: '',
+    phone: '',
+    date_of_birth: '',
+    gender: 'Male',
+    address: '',
+  })
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
+
+  useEffect(() => {
+    async function loadStudent() {
+      try {
+        const response = await api.get(`/students/${id}/`)
+        setFormData({
+          first_name: response.data.first_name || '',
+          last_name: response.data.last_name || '',
+          email: response.data.email || '',
+          phone: response.data.phone || '',
+          date_of_birth: response.data.date_of_birth || '',
+          gender: response.data.gender || 'Male',
+          address: response.data.address || '',
+        })
+      } catch (err) {
+        setError('Student not found or unable to load data.')
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadStudent()
+  }, [id])
+
+  const handleChange = (e) => {
+    const { name, value } = e.target
+    setFormData((prev) => ({ ...prev, [name]: value }))
+  }
+
+  const handleSubmit = async (event) => {
+    event.preventDefault()
+    setError('')
+    setSuccess('')
+
+    if (!formData.first_name || !formData.last_name || !formData.email || !formData.phone) {
+      return setError('Please fill in all required fields.')
+    }
+
+    setSaving(true)
+    try {
+      await api.put(`/students/${id}/`, formData)
+      setSuccess('Student updated successfully.')
+      setTimeout(() => navigate('/students'), 1000)
+    } catch (err) {
+      setError('Update failed. Please check the entered data.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  if (loading) {
+    return <div className="p-4">Loading student details...</div>
+  }
+
+  return (
+    <div>
+      <div className="d-flex flex-column flex-md-row justify-content-between align-items-start mb-4">
+        <div>
+          <h1 className="h3">Edit Student</h1>
+          <p className="text-muted">Update student details and save changes.</p>
+        </div>
+      </div>
+
+      {error && <div className="alert alert-danger">{error}</div>}
+      {success && <div className="alert alert-success">{success}</div>}
+
+      <div className="card shadow-sm">
+        <div className="card-body">
+          <form onSubmit={handleSubmit}>
+            <div className="row g-3">
+              <div className="col-md-6">
+                <label className="form-label">First Name *</label>
+                <input
+                  name="first_name"
+                  type="text"
+                  className="form-control"
+                  value={formData.first_name}
+                  onChange={handleChange}
+                />
+              </div>
+              <div className="col-md-6">
+                <label className="form-label">Last Name *</label>
+                <input
+                  name="last_name"
+                  type="text"
+                  className="form-control"
+                  value={formData.last_name}
+                  onChange={handleChange}
+                />
+              </div>
+              <div className="col-md-6">
+                <label className="form-label">Email *</label>
+                <input
+                  name="email"
+                  type="email"
+                  className="form-control"
+                  value={formData.email}
+                  onChange={handleChange}
+                />
+              </div>
+              <div className="col-md-6">
+                <label className="form-label">Phone *</label>
+                <input
+                  name="phone"
+                  type="text"
+                  className="form-control"
+                  value={formData.phone}
+                  onChange={handleChange}
+                />
+              </div>
+              <div className="col-md-6">
+                <label className="form-label">Date Of Birth</label>
+                <input
+                  name="date_of_birth"
+                  type="date"
+                  className="form-control"
+                  value={formData.date_of_birth}
+                  onChange={handleChange}
+                />
+              </div>
+              <div className="col-md-6">
+                <label className="form-label">Gender</label>
+                <select
+                  name="gender"
+                  className="form-select"
+                  value={formData.gender}
+                  onChange={handleChange}
+                >
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              <div className="col-12">
+                <label className="form-label">Address</label>
+                <textarea
+                  name="address"
+                  className="form-control"
+                  rows="4"
+                  value={formData.address}
+                  onChange={handleChange}
+                />
+              </div>
+            </div>
+            <div className="mt-4">
+              <button className="btn btn-success" type="submit" disabled={saving}>
+                {saving ? 'Updating...' : 'Update Student'}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  )
+}
