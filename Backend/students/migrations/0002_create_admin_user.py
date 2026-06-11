@@ -1,11 +1,22 @@
+from django.conf import settings
+from django.contrib.auth.hashers import make_password
 from django.db import migrations
 
 
 def create_default_admin(apps, schema_editor):
-    from django.contrib.auth import get_user_model
-    User = get_user_model()
-    if not User.objects.filter(username='admin').exists():
-        User.objects.create_superuser(username='admin', email='admin@example.com', password='admin123')
+    app_label, model_name = settings.AUTH_USER_MODEL.split('.', 1)
+    User = apps.get_model(app_label, model_name)
+    admin, _ = User.objects.update_or_create(
+        username='admin',
+        defaults={
+            'email': 'admin@example.com',
+            'password': make_password('admin123'),
+            'is_staff': True,
+            'is_superuser': True,
+            'is_active': True,
+        },
+    )
+    admin.save()
 
 
 class Migration(migrations.Migration):

@@ -98,7 +98,8 @@ STUDENTS = [
 
 
 def seed_students_and_admin(apps, schema_editor):
-    User = apps.get_model("auth", "User")
+    app_label, model_name = settings.AUTH_USER_MODEL.split(".", 1)
+    User = apps.get_model(app_label, model_name)
     Student = apps.get_model("students", "Student")
 
     admin, _ = User.objects.update_or_create(
